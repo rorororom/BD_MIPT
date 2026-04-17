@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}SQL Query{% endblock %}
+
+{% block content %}
+<h1> SQL Query Editor</h1>
+
+<div class="query-layout">
+ <!-- Sidebar with example queries -->
+ <div class="sidebar">
+ <div class="card" style="padding: 12px;">
+ <div class="card-header" style="font-size: 14px;">Примеры запросов</div>
+ {% for category in example_queries %}
+ <div class="category-title">{{ category.category }}</div>
+ <div class="query-list">
+ {% for q in category.queries %}
+ <button class="query-item" onclick="loadQuery(this)" data-sql="{{ q.sql }}">
+ {{ q.name }}
+ </button>
+ {% endfor %}
+ </div>
+ {% endfor %}
+ </div>
+ </div>
+
+ <!-- Main editor area -->
+ <div>
+ <form method="POST" action="/query" id="queryForm">
+ <div class="card">
+ <div class="card-header">
+ SQL-запрос
+ <span style="margin-left: auto; font-size: 12px; color: var(--text-muted);">
+ Ctrl+Enter для выполнения
+ </span>
+ </div>
+ <textarea
+ name="sql"
+ id="sqlEditor"
+ class="sql-editor"
+ placeholder="SELECT * FROM characters ORDER BY level DESC;"
+ spellcheck="false"
+ >{{ sql }}</textarea>
+ <div style="display: flex; gap: 8px; margin-top: 12px;">
+ <button type="submit" class="btn btn-primary"> Выполнить</button>
+ <button type="button" class="btn" onclick="clearEditor()"> Очистить</button>
+ </div>
+ </div>
+ </form>
+
+ {% if error %}
+ <div class="error">{{ error }}</div>
+ {% endif %}
+
+ {% if results is not none %}
+ <div class="result-info">
+ <span>Результат: <strong>{{ row_count }}</strong> строк</span>
+ </div>
+
+ {% if columns %}
+ <div class="card" style="padding: 0;">
+ <div class="table-wrapper" style="max-height: 500px; overflow-y: auto;">
+ <table>
+ <thead>
+ <tr>
+ <th style="color: var(--text-muted); width: 40px;">#</th>
+ {% for col in columns %}
+ <th>{{ col }}</th>
+ {% endfor %}
+ </tr>
+ </thead>
+ <tbody>
+ {% for row in results %}
+ <tr>
+ <td style="color: var(--text-muted);">{{ loop.index }}</td>
+ {% for val in row %}
+ <td>{{ val if val is not none else '—' }}</td>
+ {% endfor %}
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+ </div>
+ {% else %}
+ <div class="success">
+ Запрос выполнен. Затронуто строк: {{ row_count }}
+ </div>
+ {% endif %}
+ {% endif %}
+ </div>
+</div>
+
+<script>
+ const editor = document.getElementById('sqlEditor');
+ const form = document.getElementById('queryForm');
+
+ // Ctrl+Enter to submit
+ editor.addEventListener('keydown', function(e) {
+ if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+ e.preventDefault();
+ form.submit();
+ }
+ // Tab inserts spaces
+ if (e.key === 'Tab') {
+ e.preventDefault();
+ const start = this.selectionStart;
+ const end = this.selectionEnd;
+ this.value = this.value.substring(0, start) + ' ' + this.value.substring(end);
+ this.selectionStart = this.selectionEnd = start + 4;
+ }
+ });
+
+ function loadQuery(btn) {
+ editor.value = btn.dataset.sql;
+ editor.focus();
+ // Auto-submit
+ form.submit();
+ }
+
+ function clearEditor() {
+ editor.value = '';
+ editor.focus();
+ }
+
+ // Load SQL from URL parameter
+ const urlParams = new URLSearchParams(window.location.search);
+ const sqlParam = urlParams.get('sql');
+ if (sqlParam && !editor.value.trim()) {
+ editor.value = sqlParam;
+ form.submit();
+ }
+</script>
+{% endblock %}

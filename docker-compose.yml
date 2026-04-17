@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: marketplace_db
+    environment:
+      POSTGRES_DB: marketplace
+      POSTGRES_USER: student
+      POSTGRES_PASSWORD: student123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U student -d marketplace"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: ./web
+    container_name: marketplace_web
+    ports:
+      - "8080:5000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: marketplace
+      DB_USER: student
+      DB_PASS: student123
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

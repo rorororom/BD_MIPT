@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ table_name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+ <a href="/" class="btn btn-sm">← Back</a>
+ <h1 style="margin-bottom: 0;"> {{ table_name }}</h1>
+ <span class="badge badge-type">{{ rows|length }} rows</span>
+</div>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+{% if columns_info %}
+<div class="card" style="margin-bottom: 16px;">
+ <div class="card-header"> Структура таблицы</div>
+ <div class="table-wrapper">
+ <table>
+ <thead>
+ <tr>
+ <th>Столбец</th>
+ <th>Тип</th>
+ <th>Nullable</th>
+ </tr>
+ </thead>
+ <tbody>
+ {% for col in columns_info %}
+ <tr>
+ <td><strong>{{ col.column_name }}</strong></td>
+ <td><code style="color: var(--accent);">{{ col.data_type }}</code></td>
+ <td style="text-align:center;font-weight:bold;">
+  {% if col.is_nullable == 'YES' %}
+  <span style="color:#d4548a;">+</span>
+  {% else %}
+  <span style="color:#e07b39;">-</span>
+  {% endif %}
+ </td>
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+</div>
+{% endif %}
+
+{% if rows %}
+<div class="card">
+ <div class="card-header"> Данные</div>
+ <div class="table-wrapper" style="max-height: 600px; overflow-y: auto;">
+ <table>
+ <thead>
+ <tr>
+ {% for col in columns %}
+ <th>{{ col }}</th>
+ {% endfor %}
+ </tr>
+ </thead>
+ <tbody>
+ {% for row in rows %}
+ <tr>
+ {% for col in columns %}
+ <td>{{ row[col] if row[col] is not none else '—' }}</td>
+ {% endfor %}
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+</div>
+{% else %}
+<div class="card">
+ <p style="color: var(--text-muted); text-align: center; padding: 20px;">Таблица пуста</p>
+</div>
+{% endif %}
+
+<div style="margin-top: 16px;">
+ <a href="/query?sql=SELECT * FROM {{ table_name }} LIMIT 50;" class="btn btn-primary">
+ Открыть в SQL-редакторе
+ </a>
+</div>
+{% endblock %}

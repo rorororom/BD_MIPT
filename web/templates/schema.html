@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Schema{% endblock %}
+
+{% block content %}
+<h1> Database Schema</h1>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<!-- Relationship Graph via Mermaid -->
+<div class="graph-container" style="padding: 0;">
+ <div class="card-header" style="padding: 14px 20px;"> Граф связей между таблицами</div>
+ <div style="padding: 20px; overflow-x: auto; background: #fff8fa; border-radius: 0 0 12px 12px;">
+ <div class="mermaid">
+erDiagram
+ cities {
+ int city_id PK
+ }
+ customers {
+ int customer_id PK
+ int city_id FK
+ }
+ sellers {
+ int seller_id PK
+ int city_id FK
+ }
+ warehouses {
+ int warehouse_id PK
+ int city_id FK
+ }
+ couriers {
+ int courier_id PK
+ int city_id FK
+ }
+ pickup_points {
+ int point_id PK
+ int city_id FK
+ }
+ pickup_point_schedule {
+ int schedule_id PK
+ int point_id FK
+ }
+ categories {
+ int category_id PK
+ }
+ subcategories {
+ int subcategory_id PK
+ int category_id FK
+ }
+ products {
+ int product_id PK
+ int seller_id FK
+ int subcategory_id FK
+ numeric price
+ int stock_qty
+ }
+ product_images {
+ int image_id PK
+ int product_id FK
+ }
+ promo_codes {
+ int promo_id PK
+ }
+ cart_items {
+ int cart_item_id PK
+ int customer_id FK
+ int product_id FK
+ }
+ orders {
+ int order_id PK
+ int customer_id FK
+ }
+ order_delivery {
+ int delivery_id PK
+ int order_id FK
+ int pickup_point_id FK
+ int courier_id FK
+ }
+ order_items {
+ int order_item_id PK
+ int order_id FK
+ int product_id FK
+ }
+ delivery_log {
+ int log_id PK
+ int order_id FK
+ }
+ reviews {
+ int review_id PK
+ int customer_id FK
+ int product_id FK
+ }
+
+ cities ||--o{ customers : "живёт в"
+ cities ||--o{ sellers : "находится в"
+ cities ||--o{ warehouses : "находится в"
+ cities ||--o{ couriers : "работает в"
+ cities ||--o{ pickup_points : "находится в"
+
+ categories ||--o{ subcategories : "содержит"
+ subcategories ||--o{ products : "содержит"
+ sellers ||--o{ products : "продаёт"
+
+ products ||--o{ product_images : "имеет фото"
+ products ||--o{ reviews : "получает отзывы"
+ products ||--o{ cart_items : "добавляется в"
+ products ||--o{ order_items : "входит в"
+
+ customers ||--o{ orders : "делает"
+ customers ||--o{ cart_items : "добавляет"
+ customers ||--o{ reviews : "пишет"
+
+ orders ||--o{ order_delivery : "имеет доставку"
+ orders ||--o{ order_items : "содержит"
+ orders ||--o{ delivery_log : "отслеживается"
+
+ order_delivery }o--|| pickup_points : "в ПВЗ"
+ order_delivery }o--|| couriers : "курьером"
+ pickup_points ||--o{ pickup_point_schedule : "имеет расписание"
+ </div>
+ </div>
+</div>
+
+<!-- Mermaid.js -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+ mermaid.initialize({
+ startOnLoad: true,
+ theme: 'base',
+ themeVariables: {
+ primaryColor: '#fce4ef',
+ primaryTextColor: '#3d2b33',
+ primaryBorderColor: '#d4548a',
+ lineColor: '#d4548a',
+ secondaryColor: '#f3eaff',
+ tertiaryColor: '#eaf1fb',
+ background: '#fff8fa',
+ mainBkg: '#fce4ef',
+ nodeBorder: '#d4548a',
+ clusterBkg: '#fff8fa',
+ titleColor: '#d4548a',
+ edgeLabelBackground: '#fff8fa',
+ attributeBackgroundColorEven: '#fff8fa',
+ attributeBackgroundColorOdd: '#fce4ef',
+ },
+ er: {
+ diagramPadding: 30,
+ layoutDirection: 'TB',
+ minEntityWidth: 100,
+ minEntityHeight: 75,
+ entityPadding: 15,
+ useMaxWidth: true,
+ }
+ });
+</script>
+
+{% if foreign_keys %}
+<div class="card" style="margin-bottom: 24px;">
+ <div class="card-header"> Foreign Keys ({{ foreign_keys|length }})</div>
+ <div class="table-wrapper" style="max-height: 300px; overflow-y: auto;">
+ <table>
+ <thead>
+ <tr>
+ <th>From Table</th>
+ <th>Column</th>
+ <th></th>
+ <th>To Table</th>
+ <th>Column</th>
+ </tr>
+ </thead>
+ <tbody>
+ {% for fk in foreign_keys %}
+ <tr>
+ <td><strong>{{ fk.from_table }}</strong></td>
+ <td><code>{{ fk.from_column }}</code></td>
+ <td style="color: var(--accent); text-align: center;">→</td>
+ <td><strong>{{ fk.to_table }}</strong></td>
+ <td><code>{{ fk.to_column }}</code></td>
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+</div>
+{% endif %}
+
+<h2 style="margin-bottom: 16px;"> Tables ({{ tables|length }})</h2>
+
+<div class="schema-grid">
+ {% for table_name, columns in tables.items() %}
+ <div class="schema-table">
+ <div class="schema-table-header">
+ <a href="/table/{{ table_name }}" style="color: var(--accent); text-decoration: none;">
+ {{ table_name }}
+ </a>
+ <span style="margin-left: auto; font-size: 12px; color: var(--text-muted);">
+ {{ columns|length }} cols
+ </span>
+ </div>
+ {% for col in columns %}
+ <div class="schema-col">
+ {% if col.is_pk %}
+ <span class="badge badge-pk">PK</span>
+ {% endif %}
+ <span class="col-name">{{ col.name }}</span>
+ <span class="col-type">{{ col.type }}</span>
+ {% if col.nullable == 'NO' and not col.is_pk %}
+ <span style="color: var(--orange); font-size: 11px;">NOT NULL</span>
+ {% endif %}
+ </div>
+ {% endfor %}
+ </div>
+ {% endfor %}
+</div>
+{% endblock %}

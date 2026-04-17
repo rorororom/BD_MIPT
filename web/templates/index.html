@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1> Dashboard</h1>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<div class="card" style="margin-bottom: 24px;">
+ <div class="card-header"> Online Marketplace Database</div>
+</div>
+
+<h2> Таблицы ({{ tables|length }})</h2>
+<div class="grid" style="margin-bottom: 32px;">
+ {% for table in tables %}
+ <a href="/table/{{ table.name }}" class="grid-item">
+ <div class="name">{{ table.name }}</div>
+ <div class="count">{{ table.count }} записей</div>
+ </a>
+ {% endfor %}
+</div>
+
+{% endblock %}
