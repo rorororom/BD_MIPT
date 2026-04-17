@@ -1,8 +1,3 @@
--- ============================================================
--- Online Marketplace Database
--- 18 таблиц в 3НФ, не более 4 полей в каждой таблице
--- ============================================================
-
 DROP TABLE IF EXISTS reviews CASCADE;
 DROP TABLE IF EXISTS delivery_log CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
